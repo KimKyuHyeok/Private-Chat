@@ -1,6 +1,7 @@
 const express = require('express');
 const app = express();
 const path = require('path');
+const crypto = require('crypto');
 
 const http = require('http');
 const { Server } = require('socket.io');
@@ -18,9 +19,40 @@ mongoose.connect('mongodb+srv://admin:1234@express-cluster.tjxac.mongodb.net/?re
     .then(() => console.log('DB 연결 성공'))
     .catch(err => console.error(err)); // 수정된 부분
 
+
+const randomId = () => crypto.randomBytes(8).toString('hex');
+
+app.post('/session', (req, res) => {
+    const data = {
+        username: req.body.username,
+        userID: randomId()
+    }
+    console.log("Data : ", data);
+
+    res.send(data);
+})
+
+io.use((socket, next) => {
+    const username = socket.handshake.auth.username;
+    const userID = socket.handshake.auth.userID;
+
+    if(!username) {
+        return next(new Error('Invalid username'));
+    }
+
+    socket.username = username;
+    socket.id = userID;
+
+    next();
+})
+
 let users = [];
 io.on('connection', async socket => {
-    let userData = {};
+
+    let userData = {
+        username: socket.username,
+        userID: socket.id
+    };
     users.push(userData);
     io.emit('users-data', { users });
 

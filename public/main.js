@@ -148,10 +148,28 @@ msgForm.addEventListener('submit', (e) => {
     message.focus();
 })
 
-const appendMessage = ({message, time, background, position}) => {
+const appendMessage = ({ message, time, background, position }) => {
     let div = document.createElement('div');
     div.classList.add('message', 'bg-opacity-25', 'm-2', 'px-2', 'py-1', background, position);
-    div.innerHTML = `<span class="msg-text">${message}</span><span class="msg-time"> ${time}</span>`
+    div.innerHTML = `<span class="msg-text">${message}</span> <span class="msg-time"> ${time}</span>`;
     messages.append(div);
-    messages.scrollTop(0, messages.scrollHeight);
+    messages.scrollTo(0, messages.scrollHeight);
 }
+
+socket.on('message-to-client', ({ from, message, time }) => {
+    const receiver = title.getAttribute('userID');
+    const notify = document.getElementById(from);
+
+    if (receiver === null) {
+        notify.classList.remove('d-none');
+    } else if (receiver === from) {
+        appendMessage({
+            message,
+            time,
+            background: 'bg-secondary',
+            position: 'left'
+        })
+    } else {
+        notify.classList.remove('d-none');
+    }
+})

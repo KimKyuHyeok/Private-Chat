@@ -53,8 +53,10 @@ const createSession = async (username) => {
 
 const socketConnect = async (username, userID) => {
     socket.auth = {username, userID}
-    
-    await socket.connect();
+
+    if (!socket.connected) {
+        await socket.connect();
+    }
 }
 
 socket.on('users-data', ({ users }) => {
@@ -68,17 +70,18 @@ socket.on('users-data', ({ users }) => {
 
     // user table list 생성
     let ul = `<table class="table table-hover">`;
-    for(const user of users) {
-        ul += `<tr class="socket-users" onclick="setActiveUser(this, '${user.username}', ${user.userID}')"><td>${user.username}<span class="text-danger ps-1 d-none" id="${user.userID}">!</span></td></tr>`;
+    for (const user of users) {
+        ul += `<tr class="socket-users" onclick="setActiveUser(this, '${user.username}', '${user.userID}')"><td>${user.username}<span class="text-danger ps-1 d-none" id="${user.userID}">!</span></td></tr>`
     }
     ul += `</table>`
 
-    if(users.length > 0) {
+    if (users.length > 0) {
+        userTable.innerHTML = ul;
         userTagline.innerHTML = '접속 중인 유저';
         userTagline.classList.remove('text-danger');
         userTagline.classList.add('text-success');
     } else {
-        userTagline.innerHTML = '접속 중인 유저가 없습니다.';
+        userTagline.innerHTML = '접속 중인 유저 없음';
         userTagline.classList.remove('text-success');
         userTagline.classList.add('text-danger');
     }
@@ -94,4 +97,61 @@ if(sessionUsername && sessionUserID) {
     chatBody.classList.remove('d-none');
 
     userTitle.innerHTML = sessionUsername;
+}
+
+const setActiveUser = (element, username, userID) => {
+    title.innerHTML = username;
+    title.setAttribute('userID', userID);
+
+    const lists = document.getElementsByClassName('socket-users');
+    for(let i = 0; i < lists.length; i++) {
+        lists[i].classList.remove('table-active');
+    }
+
+    element.classList.add('table-active');
+
+    // 사용자 선택 후 메시지 영역 표시
+    msgDiv.classList.remove('d-none');
+    messages.classList.remove('d-none');
+    messages.innerHTML = '';
+    socket.emit('fetch-message', {receiver: userID});
+    const notify = document.getElementById(userID);
+    notify.classList.add('d-none');
+}
+
+const msgForm = document.querySelector('.msgForm');
+const message = document.getElementById('message');
+
+msgForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+
+    const to = title.getAttribute('userID');
+    const time = new Date().toLocaleString('en-US', {
+        hour: 'numeric',
+        minute: 'numeric',
+        hour12: true,
+    })
+
+    // 메시지 payload 만들기
+    const payload = {
+        from: socket.id,
+        to,
+        message: message.value,
+        time
+    }
+
+    socket.emit('message-to-server', payload);
+
+    appendMessage({ ...payload, background: 'bg-success', position: 'right' });
+
+    message.value = '';
+    message.focus();
+})
+
+const appendMessage = ({message, time, background, position}) => {
+    let div = document.createElement('div');
+    div.classList.add('message', 'bg-opacity-25', 'm-2', 'px-2', 'py-1', background, position);
+    div.innerHTML = `<span class="msg-text">${message}</span><span class="msg-time"> ${time}</span>`
+    messages.append(div);
+    messages.scrollTop(0, messages.scrollHeight);
 }

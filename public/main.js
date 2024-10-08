@@ -83,3 +83,15 @@ socket.on('users-data', ({ users }) => {
         userTagline.classList.add('text-danger');
     }
 })
+
+const sessionUsername = localStorage.getItem('session-username');
+const sessionUserID = localStorage.getItem('session-userID');
+
+if(sessionUsername && sessionUserID) {
+    socketConnect(sessionUsername, sessionUserID);
+
+    loginContainer.classList.add('d-none');
+    chatBody.classList.remove('d-none');
+
+    userTitle.innerHTML = sessionUsername;
+}

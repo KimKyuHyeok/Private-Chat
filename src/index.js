@@ -70,7 +70,11 @@ io.on('connection', async socket => {
 
     // 유저가 방에서 나갔을 때
     socket.on('disconnect', () => {
+        users = users.filter(user => user.userID !== socket.id);
 
+        io.emit('users-data', { users });
+
+        io.emit('user-away', socket.id);
     });
 });
 

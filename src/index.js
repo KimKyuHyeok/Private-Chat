@@ -6,7 +6,7 @@ const crypto = require('crypto');
 const http = require('http');
 const { Server } = require('socket.io');
 const mongoose = require('mongoose'); // 수정된 부분
-const { saveMessages } = require('./utils/messages');
+const { saveMessages, fetchMessages } = require('./utils/messages');
 const server = http.createServer(app);
 const port = 4000;
 
@@ -64,8 +64,8 @@ io.on('connection', async socket => {
     });
 
     // 데이터베이스에서 메시지 가져오기
-    socket.on('fetch-messages', () => {
-
+    socket.on('fetch-messages', ({receiver: userID}) => {
+        fetchMessages(io, socket.id, receiver);
     });
 
     // 유저가 방에서 나갔을 때

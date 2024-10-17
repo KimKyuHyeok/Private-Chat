@@ -182,3 +182,28 @@ socket.on('user-away', userID => {
         messages.classList.add('d-none');
     }
 })
+
+socket.on('stored-messages', ({ messages }) => {
+    if (messages.length > 0) {
+        messages.forEach(msg => {
+            const payload = {
+                message: msg.message,
+                time: msg.time
+            }
+
+            if (msg.from === socket.id) {
+                appendMessage({
+                    ...payload,
+                    background: 'bg-success',
+                    position: 'right'
+                })
+            } else {
+                appendMessage({
+                    ...payload,
+                    background: 'bg-secondary',
+                    position: 'left'
+                })
+            }
+        })
+    }
+})
